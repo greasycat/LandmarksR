@@ -134,6 +134,11 @@ namespace LandmarksR.Scripts.Experiment.Data
         /// </summary>
         private void Parse()
         {
+            if ((rows == null || rows.Count == 0) && !string.IsNullOrWhiteSpace(dataPath))
+            {
+                LoadFromFile();
+            }
+
             if (rows == null || rows.Count == 0)
             {
                 ExperimentLogger.Instance.W("data", $"({name}) Rows are empty.");

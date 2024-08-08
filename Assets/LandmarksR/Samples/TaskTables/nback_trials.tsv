@@ -1,0 +1,5 @@
+trial_id	stimulus	correct_response	condition	n_value	fixation_ms	stimulus_ms	response_window_ms	inter_trial_ms
+1	A	left	match	2	400	900	1500	250
+2	B	right	non_match	2	400	900	1500	250
+3	A	left	match	2	400	900	1500	250
+4	C	right	non_match	2	400	900	1500	250

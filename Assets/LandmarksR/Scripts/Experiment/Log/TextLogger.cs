@@ -1,94 +1,122 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LandmarksR.Scripts.Experiment.Log
 {
-    /// <summary>
-    /// Manages logging both locally and remotely.
-    /// </summary>
-    public class TextLogger
+    public sealed class StructuredLogFileSet<TRecord> : IAsyncDisposable
     {
-        private LocalLogger _localLogger;
-        private RemoteLogger _remoteLogger;
+        private readonly Func<TRecord, Dictionary<string, string>> _rowBuilder;
+        private readonly LocalLogger _jsonlLogger;
+        private readonly LocalLogger _tsvLogger;
+        private readonly LocalLogger _csvLogger;
+        private readonly RemoteLogger _remoteLogger;
+        private readonly IReadOnlyList<string> _columns;
 
-        /// <summary>
-        /// Enables local logging to a specified file.
-        /// </summary>
-        /// <param name="filePath">The path to the log file.</param>
-        public void EnableLocalLog(string filePath = "log.txt")
+        public StructuredLogFileSet(string localDirectoryPath, string remoteDirectoryPath, string baseFileName,
+            IReadOnlyList<string> columns,
+            Func<TRecord, Dictionary<string, string>> rowBuilder, LoggingSettings loggingSettings)
         {
-            _localLogger = new LocalLogger(filePath);
+            loggingSettings.ApplyDefaults();
+            _columns = columns;
+            _rowBuilder = rowBuilder;
+            var jsonFileName = $"{baseFileName}.{loggingSettings.GetJsonFileExtension()}";
+
+            if (loggingSettings.localLogging)
+            {
+                _jsonlLogger = new LocalLogger(Path.Combine(localDirectoryPath, jsonFileName));
+
+                if (loggingSettings.ShouldExportTsv())
+                {
+                    var tsvPath = Path.Combine(localDirectoryPath, $"{baseFileName}.tsv");
+                    var needsHeader = IsFileEmpty(tsvPath);
+                    _tsvLogger = new LocalLogger(tsvPath);
+                    if (needsHeader)
+                    {
+                        _tsvLogger.Log(StructuredLogging.FormatDelimitedRow(columns, '\t'));
+                    }
+                }
+
+                if (loggingSettings.ShouldExportCsv())
+                {
+                    var csvPath = Path.Combine(localDirectoryPath, $"{baseFileName}.csv");
+                    var needsHeader = IsFileEmpty(csvPath);
+                    _csvLogger = new LocalLogger(csvPath);
+                    if (needsHeader)
+                    {
+                        _csvLogger.Log(StructuredLogging.FormatDelimitedRow(columns, ','));
+                    }
+                }
+            }
+
+            if (loggingSettings.remoteLogging)
+            {
+                var remoteFilePath = BuildRemoteFilePath(remoteDirectoryPath, jsonFileName);
+                _remoteLogger = new RemoteLogger(remoteFilePath,
+                    loggingSettings.remoteStatusUrl, loggingSettings.remoteLogUrl);
+            }
         }
 
-        /// <summary>
-        /// Enables remote logging to specified URLs.
-        /// </summary>
-        /// <param name="filePath">The path to the log file.</param>
-        /// <param name="remoteStatusUrl">The URL for remote status.</param>
-        /// <param name="remoteLogUrl">The URL for remote logging.</param>
-        public void EnableRemoteLog(string filePath = "log.txt",
-            string remoteStatusUrl = "http://localhost:3000/status", string remoteLogUrl = "http://localhost:3000/log")
+        public void Log(TRecord record)
         {
-            _remoteLogger = new RemoteLogger(filePath, remoteStatusUrl, remoteLogUrl);
+            var json = StructuredLogging.SerializeRecord(record);
+            _jsonlLogger?.Log(json);
+            _remoteLogger?.Log(json);
+
+            var row = _rowBuilder(record);
+            if (_tsvLogger != null)
+            {
+                _tsvLogger.Log(StructuredLogging.FormatDelimitedRow(_columns, row, '\t'));
+            }
+
+            if (_csvLogger != null)
+            {
+                _csvLogger.Log(StructuredLogging.FormatDelimitedRow(_columns, row, ','));
+            }
         }
 
-        /// <summary>
-        /// Logs a message with a specified tag and type.
-        /// </summary>
-        /// <param name="messageTag">The tag associated with the message.</param>
-        /// <param name="type">The type of the log message.</param>
-        /// <param name="message">The message to log.</param>
-        protected virtual void Log(string messageTag, LogType type, object message)
-        {
-            var logMessage = new LogMessage(DateTime.Now.ToString("yyyy-M-d HH:mm:ss"), messageTag, type,
-                message.ToString());
-            _localLogger?.Log(logMessage);
-            _remoteLogger?.Log(logMessage);
-        }
-
-        /// <summary>
-        /// Logs a data message.
-        /// </summary>
-        /// <param name="message">The data message to log.</param>
-        public void LogData(string message)
-        {
-            var logMessage = new LogMessage(message);
-            _localLogger?.Log(logMessage);
-            _remoteLogger?.Log(logMessage);
-        }
-
-        /// <summary>
-        /// Stops logging asynchronously.
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task StopAsync()
         {
-            if (_localLogger != null)
-                await _localLogger.StopAsync();
+            if (_jsonlLogger != null)
+            {
+                await _jsonlLogger.StopAsync();
+            }
+
+            if (_tsvLogger != null)
+            {
+                await _tsvLogger.StopAsync();
+            }
+
+            if (_csvLogger != null)
+            {
+                await _csvLogger.StopAsync();
+            }
 
             if (_remoteLogger != null)
+            {
                 await _remoteLogger.StopAsync();
+            }
         }
 
-        /// <summary>
-        /// Logs an info message.
-        /// </summary>
-        /// <param name="messageTag">The tag associated with the message.</param>
-        /// <param name="message">The message to log.</param>
-        public void I(string messageTag, object message) => Log(messageTag, LogType.Info, message);
+        public async ValueTask DisposeAsync()
+        {
+            await StopAsync();
+        }
 
-        /// <summary>
-        /// Logs a warning message.
-        /// </summary>
-        /// <param name="messageTag">The tag associated with the message.</param>
-        /// <param name="message">The message to log.</param>
-        public void W(string messageTag, object message) => Log(messageTag, LogType.Warning, message);
+        private static string BuildRemoteFilePath(string directoryPath, string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(directoryPath))
+            {
+                return fileName;
+            }
 
-        /// <summary>
-        /// Logs an error message.
-        /// </summary>
-        /// <param name="messageTag">The tag associated with the message.</param>
-        /// <param name="message">The message to log.</param>
-        public void E(string messageTag, object message) => Log(messageTag, LogType.Error, message);
+            return Path.Combine(directoryPath, fileName).Replace('\\', '/');
+        }
+
+        private static bool IsFileEmpty(string filePath)
+        {
+            return !File.Exists(filePath) || new FileInfo(filePath).Length == 0;
+        }
     }
 }

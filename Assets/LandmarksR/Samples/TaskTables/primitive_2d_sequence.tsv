@@ -1,0 +1,7 @@
+sequence	timestamp_ms	target_id	operation	x	y	z	r	g	b	a	visible	space	custom_key	custom_value
+1	0	StimulusLabel	Translate	0	0	0							Local		
+1	0	StimulusLabel	Color				255	255	255	255				initial
+1	600	StimulusLabel	Scale	1.2	1.2	1							Local		
+1	1200	StimulusLabel	Rotate	0	0	15							Local		
+1	1800	StimulusLabel	Visibility								false			
+1	2200	StimulusLabel	Custom										note	show_feedback

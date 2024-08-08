@@ -241,6 +241,16 @@ namespace LandmarksR.Scripts.Experiment.Data
             return GetValue<T>(0, col);
         }
 
+        public bool HasColumn(string columnName)
+        {
+            return _columnNameMap.TryGetIndex(columnName, out _);
+        }
+
+        public IReadOnlyList<string> GetColumnNames()
+        {
+            return _columnNameMap.GetOrderedNames();
+        }
+
         public void SetValue(int row, int col, object? value)
         {
             if (row < 0 || row >= RowCount)

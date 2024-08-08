@@ -59,7 +59,7 @@ namespace LandmarksR.Scripts.Experiment.UI
         {
             if (participantIdInput == null)
             {
-                Debug.LogError("Participant ID Input has not been assigned to the StartScreen script. This is a critical error");
+                Debug.LogError("Subject ID Input has not been assigned to the StartScreen script. This is a critical error");
                 return false;
             }
 
@@ -91,11 +91,9 @@ namespace LandmarksR.Scripts.Experiment.UI
         {
             if (string.IsNullOrEmpty(participantIdInput.text))
             {
-                errorText.text = "Please enter a participant ID";
+                errorText.text = "Please enter a subject ID";
                 return false;
             }
-
-            // Settings.Instance.experiment.participantId = participantIdInput.text;
 
             if (sceneModeSelection.GetSelectedOption() == null)
             {
@@ -104,7 +102,8 @@ namespace LandmarksR.Scripts.Experiment.UI
             }
 
             var settings = _availableSettings[settingsSelection.GetSelectedIndex()];
-            settings.experiment.participantId = participantIdInput.text;
+            settings.experiment.SetSubjectId(participantIdInput.text);
+            settings.experiment.runSessionId = string.Empty;
 
             // Create a new instance of the selected settings
             var settingClone = Instantiate(settings);

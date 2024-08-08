@@ -1,0 +1,5 @@
+trial_id	center_symbol	flanker_symbol	correct_response	condition	fixation_ms	stimulus_ms	response_window_ms	inter_trial_ms
+1	<	<	left	congruent	400	800	1400	250
+2	>	<	right	incongruent	400	800	1400	250
+3	>	>	right	congruent	400	800	1400	250
+4	<	>	left	incongruent	400	800	1400	250

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using LandmarksR.Scripts.Experiment.Tasks;
 using LandmarksR.Scripts.Experiment.Tasks.Structural;
 using LandmarksR.Scripts.Player;
@@ -49,9 +50,11 @@ namespace LandmarksR.Scripts.Experiment
         /// <summary>
         /// Unity Start method. Initializes the experiment and starts the root task.
         /// </summary>
-        private void Start()
+        private IEnumerator Start()
         {
             Debug.Assert(playerController != null, "PlayerController is not set");
+
+            yield return StartCoroutine(WaitForPlayerSystems());
 
             var rootTaskGameObject = GameObject.FindGameObjectWithTag("RootTask");
             if (rootTaskGameObject == null)
@@ -66,6 +69,26 @@ namespace LandmarksR.Scripts.Experiment
             }
 
             StartCoroutine(rootTask.ExecuteAll());
+        }
+
+        private IEnumerator WaitForPlayerSystems()
+        {
+            const float timeoutSeconds = 5f;
+            var elapsed = 0f;
+
+            while (playerController != null &&
+                   (playerController.playerEvent == null ||
+                    playerController.hud == null ||
+                    !playerController.hud.IsInitialized))
+            {
+                if (elapsed >= timeoutSeconds)
+                {
+                    throw new Exception("Player systems were not ready before experiment start.");
+                }
+
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
         }
     }
 }

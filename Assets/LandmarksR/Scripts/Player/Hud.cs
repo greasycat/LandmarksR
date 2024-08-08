@@ -27,6 +27,8 @@ namespace LandmarksR.Scripts.Player
     /// </summary>
     public class Hud : MonoBehaviour
     {
+        public bool IsInitialized { get; private set; }
+
         private Settings _settings;
         private ExperimentLogger _logger;
         private PlayerController _playerController;
@@ -50,12 +52,6 @@ namespace LandmarksR.Scripts.Player
         /// </summary>
         private void Start()
         {
-            Assert.IsNotNull(hudTransform, "HUD Transform is not set");
-            Assert.IsNotNull(canvas, "Canvas is not set");
-            Assert.IsNotNull(instructionPanel, "Panel is not set");
-            Assert.IsNotNull(colliderTransform, "Box Collider Transform is not set");
-            Assert.IsNotNull(planeSurfaceTransform, "Plane Surface Transform is not set");
-
             _settings = Settings.Instance;
             _logger = ExperimentLogger.Instance;
             _playerController = PlayerController.Instance;
@@ -65,9 +61,19 @@ namespace LandmarksR.Scripts.Player
             Assert.IsNotNull(_playerController, "Failed to obtain PlayerController instance");
 
             _camera = _playerController.GetMainCamera();
-            SwitchHudMode(_settings.displayReference?.hudMode);
+            var activeHudMode = _settings.displayReference?.hudMode ?? hudMode;
 
-            StartCoroutine(WaitForRecenter());
+            ResolveReferences();
+            ValidateReferences(activeHudMode);
+            HideOnStartup();
+            SwitchHudMode(activeHudMode);
+
+            if (activeHudMode != HudMode.Overlay)
+            {
+                StartCoroutine(WaitForRecenter());
+            }
+
+            IsInitialized = true;
         }
 
         /// <summary>
@@ -330,7 +336,11 @@ namespace LandmarksR.Scripts.Player
         /// <returns>The current Hud instance.</returns>
         public Hud ShowAllLayer()
         {
-            canvas.worldCamera.cullingMask = -1;
+            if (canvas.worldCamera != null)
+            {
+                canvas.worldCamera.cullingMask = -1;
+            }
+
             return this;
         }
 
@@ -371,7 +381,11 @@ namespace LandmarksR.Scripts.Player
         /// <returns>The current Hud instance.</returns>
         public Hud HideLayer(string layerName)
         {
-            canvas.worldCamera.cullingMask &= ~(1 << LayerMask.NameToLayer(layerName));
+            if (canvas.worldCamera != null)
+            {
+                canvas.worldCamera.cullingMask &= ~(1 << LayerMask.NameToLayer(layerName));
+            }
+
             return this;
         }
 
@@ -382,7 +396,11 @@ namespace LandmarksR.Scripts.Player
         /// <returns>The current Hud instance.</returns>
         public Hud ShowLayer(string layerName)
         {
-            canvas.worldCamera.cullingMask |= (1 << LayerMask.NameToLayer(layerName));
+            if (canvas.worldCamera != null)
+            {
+                canvas.worldCamera.cullingMask |= (1 << LayerMask.NameToLayer(layerName));
+            }
+
             return this;
         }
 
@@ -438,6 +456,7 @@ namespace LandmarksR.Scripts.Player
             hudMode = HudMode.Overlay;
             _logger.I("hud", "SetModeOverlay");
 
+            canvas.transform.localScale = Vector3.one;
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
 
@@ -476,6 +495,61 @@ namespace LandmarksR.Scripts.Player
         {
             yield return new WaitUntil(() => _camera.transform.localPosition != Vector3.zero);
             Recenter(_settings.displayReference?.hudDistance);
+        }
+
+        private void ResolveReferences()
+        {
+            hudTransform ??= transform;
+            canvas ??= GetComponent<Canvas>();
+            instructionPanel ??= FindChildComponent<Image>("Panel");
+            titleText ??= FindChildComponent<TMP_Text>("Title");
+            contentText ??= FindChildComponent<TMP_Text>("Content");
+            confirmButton ??= FindChildComponent<Button>("ConfirmButton");
+            colliderTransform ??= hudTransform;
+            planeSurfaceTransform ??= instructionPanel != null ? instructionPanel.transform : hudTransform;
+        }
+
+        private void ValidateReferences(HudMode activeHudMode)
+        {
+            Assert.IsNotNull(hudTransform, "HUD Transform is not set");
+            Assert.IsNotNull(canvas, "Canvas is not set");
+            Assert.IsNotNull(instructionPanel, "Panel is not set");
+            Assert.IsNotNull(titleText, "Title text is not set");
+            Assert.IsNotNull(contentText, "Content text is not set");
+            Assert.IsNotNull(confirmButton, "Confirm button is not set");
+
+            if (activeHudMode == HudMode.Overlay)
+            {
+                return;
+            }
+
+            Assert.IsNotNull(colliderTransform, "Box Collider Transform is not set");
+            Assert.IsNotNull(planeSurfaceTransform, "Plane Surface Transform is not set");
+        }
+
+        private void HideOnStartup()
+        {
+            ClearAllText();
+            HideAll();
+            HideButton();
+
+            if (progressBar != null)
+            {
+                HideProgressBar();
+            }
+        }
+
+        private T FindChildComponent<T>(string childName) where T : Component
+        {
+            foreach (var component in GetComponentsInChildren<T>(true))
+            {
+                if (component.gameObject.name == childName)
+                {
+                    return component;
+                }
+            }
+
+            return null;
         }
 
         private static void SetTransformPosition(Transform tr, Vector3 position, Vector3 lookAt, Vector3 upward)

@@ -1,0 +1,7 @@
+sequence	timestamp_ms	target_id	operation	x	y	z	r	g	b	a	visible	space	custom_key	custom_value
+1	0	CubeA	Translate	0	1	2							World		
+1	300	CubeA	Color				255	0	0	255				material	red
+1	700	CubeA	Scale	1.5	1.5	1.5							Local		
+1	1100	CubeA	Rotate	0	90	0							Local		
+1	1500	CubeA	Visibility								true			
+1	1800	CubeA	Custom										tag	target

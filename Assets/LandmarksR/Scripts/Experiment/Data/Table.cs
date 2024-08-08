@@ -49,5 +49,16 @@ namespace LandmarksR.Scripts.Experiment.Data
             SetTaskType(TaskType.Functional);
             base.Prepare();
         }
+
+        public void EnsurePrepared()
+        {
+            if (Enumerator != null)
+            {
+                return;
+            }
+
+            Data ??= new DataFrame();
+            Prepare();
+        }
     }
 }

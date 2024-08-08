@@ -1,0 +1,5 @@
+trial_id	word	ink_color	correct_response	condition	fixation_ms	stimulus_ms	response_window_ms	inter_trial_ms
+1	RED	blue	left	incongruent	500	1200	1800	250
+2	GREEN	green	right	congruent	500	1200	1800	250
+3	BLUE	red	left	incongruent	500	1200	1800	250
+4	YELLOW	yellow	right	congruent	500	1200	1800	250

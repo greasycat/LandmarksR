@@ -1,21 +1,83 @@
 ﻿using System;
 using LandmarksR.Scripts.Attributes;
+using LandmarksR.Scripts.Experiment.Log;
 using LandmarksR.Scripts.Player;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
 namespace LandmarksR.Scripts.Experiment
 {
+    public static class ExperimentMetadataColumns
+    {
+        public const string SubjectId = "subject_id";
+        public const string RunSessionId = "run_session_id";
+    }
+
     /// <summary>
     /// Represents the settings for the experiment.
     /// </summary>
     [Serializable]
     public class ExperimentSettings
     {
+        private const string LegacyDefaultParticipantId = "default_participant_0";
+        private const string LegacyFallbackParticipantId = "default_participant_id";
+
         /// <summary>
-        /// The participant ID for the experiment.
+        /// The subject ID for the experiment.
         /// </summary>
-        public string participantId;
+        [FormerlySerializedAs("participantId")]
+        public string subjectId;
+
+        /// <summary>
+        /// The unique identifier for the current run session.
+        /// </summary>
+        [NotEditable] public string runSessionId;
+
+        public void SetSubjectId(string value)
+        {
+            subjectId = NormalizeSubjectId(value);
+        }
+
+        public string GetSubjectIdOrDefault(string fallback = "unassigned_subject")
+        {
+            return string.IsNullOrWhiteSpace(subjectId) ? fallback : subjectId.Trim();
+        }
+
+        public string GetRunSessionIdOrCreate()
+        {
+            if (string.IsNullOrWhiteSpace(runSessionId))
+            {
+                StartNewRunSession();
+            }
+
+            return runSessionId;
+        }
+
+        public void StartNewRunSession()
+        {
+            runSessionId = Guid.NewGuid().ToString();
+
+            if (IsPlaceholderSubjectId(subjectId))
+            {
+                subjectId = string.Empty;
+                return;
+            }
+
+            subjectId = NormalizeSubjectId(subjectId);
+        }
+
+        private static string NormalizeSubjectId(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static bool IsPlaceholderSubjectId(string value)
+        {
+            var normalized = NormalizeSubjectId(value);
+            return string.Equals(normalized, LegacyDefaultParticipantId, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(normalized, LegacyFallbackParticipantId, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     /// <summary>
@@ -203,14 +265,103 @@ namespace LandmarksR.Scripts.Experiment
         public float loggingIntervalInMillisecond;
 
         /// <summary>
-        /// The delimiter for the data file.
+        /// Legacy delimiter preference for tabular exports.
         /// </summary>
-        public string dataFileDelimiter;
+        public string dataFileDelimiter = ",";
 
         /// <summary>
-        /// The extension for the data file.
+        /// Legacy primary tabular extension.
         /// </summary>
-        public string dataFileExtension;
+        public string dataFileExtension = "csv";
+
+        /// <summary>
+        /// The extension used for canonical JSON line files.
+        /// </summary>
+        public string jsonFileExtension = StructuredLoggingDefaults.JsonLineExtension;
+
+        /// <summary>
+        /// The stable base file name for the event log.
+        /// </summary>
+        public string eventFileName = StructuredLoggingDefaults.EventBaseFileName;
+
+        /// <summary>
+        /// Indicates whether TSV exports are enabled.
+        /// </summary>
+        public bool exportTsv = true;
+
+        /// <summary>
+        /// Indicates whether CSV exports are enabled.
+        /// </summary>
+        public bool exportCsv = true;
+
+        public void ApplyDefaults()
+        {
+            if (string.IsNullOrWhiteSpace(dataFileDelimiter))
+            {
+                dataFileDelimiter = ",";
+            }
+
+            if (string.IsNullOrWhiteSpace(dataFileExtension))
+            {
+                dataFileExtension = "csv";
+            }
+
+            if (string.IsNullOrWhiteSpace(jsonFileExtension))
+            {
+                jsonFileExtension = StructuredLoggingDefaults.JsonLineExtension;
+            }
+
+            if (string.IsNullOrWhiteSpace(eventFileName))
+            {
+                eventFileName = StructuredLoggingDefaults.EventBaseFileName;
+            }
+
+            if (!exportTsv && !exportCsv)
+            {
+                exportTsv = true;
+                exportCsv = true;
+            }
+        }
+
+        public string GetJsonFileExtension()
+        {
+            ApplyDefaults();
+            return NormalizeExtension(jsonFileExtension, StructuredLoggingDefaults.JsonLineExtension);
+        }
+
+        public string GetEventBaseFileName()
+        {
+            ApplyDefaults();
+            var normalized = eventFileName.Trim();
+            var extensionSeparator = normalized.LastIndexOf('.');
+            if (extensionSeparator > 0)
+            {
+                normalized = normalized.Substring(0, extensionSeparator);
+            }
+
+            return string.IsNullOrWhiteSpace(normalized)
+                ? StructuredLoggingDefaults.EventBaseFileName
+                : normalized;
+        }
+
+        public bool ShouldExportTsv()
+        {
+            ApplyDefaults();
+            return exportTsv;
+        }
+
+        public bool ShouldExportCsv()
+        {
+            ApplyDefaults();
+            return exportCsv;
+        }
+
+        private static string NormalizeExtension(string value, string fallback)
+        {
+            var normalized = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+            normalized = normalized.TrimStart('.');
+            return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+        }
     }
 
     /// <summary>
@@ -243,7 +394,9 @@ namespace LandmarksR.Scripts.Experiment
         private static Settings BuildConfig()
         {
             var settings = new GameObject("Settings").AddComponent<Settings>();
-            settings.experiment.participantId = "default_participant_id";
+            settings.experiment.subjectId = string.Empty;
+            settings.experiment.runSessionId = string.Empty;
+            settings.logging.ApplyDefaults();
             return settings;
         }
 
@@ -259,6 +412,7 @@ namespace LandmarksR.Scripts.Experiment
             else
             {
                 _instance = this;
+                logging.ApplyDefaults();
                 SwitchDisplayMode(defaultDisplayMode);
                 DontDestroyOnLoad(this);
             }
@@ -283,7 +437,8 @@ namespace LandmarksR.Scripts.Experiment
         /// </summary>
         public ExperimentSettings experiment = new()
         {
-            participantId = "default_participant_0"
+            subjectId = string.Empty,
+            runSessionId = string.Empty
         };
 
         /// <summary>
@@ -346,7 +501,11 @@ namespace LandmarksR.Scripts.Experiment
             remoteLogUrl = "http://localhost:3000/log",
             loggingIntervalInMillisecond = 200f,
             dataFileDelimiter = ",",
-            dataFileExtension = "csv"
+            dataFileExtension = "csv",
+            jsonFileExtension = StructuredLoggingDefaults.JsonLineExtension,
+            eventFileName = StructuredLoggingDefaults.EventBaseFileName,
+            exportTsv = true,
+            exportCsv = true
         };
 
         /// <summary>

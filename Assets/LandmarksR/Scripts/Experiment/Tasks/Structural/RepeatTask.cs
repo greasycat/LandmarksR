@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using LandmarksR.Scripts.Attributes;
+using LandmarksR.Scripts.Experiment;
 using LandmarksR.Scripts.Experiment.Data;
 using UnityEngine;
 
@@ -35,6 +37,11 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Structural
     /// </summary>
     public class RepeatTask : BaseTask
     {
+        public interface IRepeatTaskOutputProvider
+        {
+            IEnumerable<string> GetRepeatOutputColumns();
+        }
+
         /// <summary>
         /// Settings for the repeat task.
         /// </summary>
@@ -112,8 +119,11 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Structural
         {
             SetTaskType(TaskType.Structural);
             base.Prepare();
+            currentRepeat = 1;
+            currentSubTaskNumber = 1;
             if (repeatOption.useTable && repeatOption.table)
             {
+                repeatOption.table.EnsurePrepared();
                 repeatOption.numberOfRepeat = repeatOption.table.Count;
                 _executeAll = ExecuteByTable;
             }
@@ -134,6 +144,7 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Structural
                 outputColumns = new List<string> { "Repeat", "SubTask" };
             }
 
+            AppendRequiredOutputColumns();
             Logger.BeginDataset(outputSetName, outputColumns);
         }
 
@@ -212,10 +223,14 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Structural
         /// </summary>
         private void LogContext()
         {
+            Context[ExperimentMetadataColumns.SubjectId] = Settings.experiment.GetSubjectIdOrDefault();
+            Context[ExperimentMetadataColumns.RunSessionId] = Settings.experiment.GetRunSessionIdOrCreate();
+            Context["Repeat"] = currentRepeat.ToString();
+            Context["SubTask"] = Mathf.Max(1, currentSubTaskNumber - 1).ToString();
+
             foreach (var column in outputColumns)
             {
-                var value = Context.GetValueOrDefault(column, "N/A").Trim('"');
-                value = $"\"{value}\"";
+                var value = Context.GetValueOrDefault(column, string.Empty);
                 Logger.SetData(outputSetName, column, value);
             }
 
@@ -242,6 +257,32 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Structural
         {
             base.Finish();
             Logger.EndDataset(outputSetName);
+        }
+
+        private void AppendRequiredOutputColumns()
+        {
+            EnsureOutputColumn(ExperimentMetadataColumns.SubjectId);
+            EnsureOutputColumn(ExperimentMetadataColumns.RunSessionId);
+
+            var additionalColumns = _subTasks
+                .OfType<IRepeatTaskOutputProvider>()
+                .SelectMany(task => task.GetRepeatOutputColumns())
+                .Where(column => !string.IsNullOrWhiteSpace(column));
+
+            foreach (var column in additionalColumns)
+            {
+                EnsureOutputColumn(column);
+            }
+        }
+
+        private void EnsureOutputColumn(string column)
+        {
+            if (outputColumns.Contains(column))
+            {
+                return;
+            }
+
+            outputColumns.Add(column);
         }
 
         /// <summary>

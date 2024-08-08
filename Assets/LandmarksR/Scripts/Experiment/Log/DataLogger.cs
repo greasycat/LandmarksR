@@ -1,64 +1,114 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using LandmarksR.Scripts.Experiment.Data;
 
 namespace LandmarksR.Scripts.Experiment.Log
 {
     /// <summary>
-    /// Manages logging of data rows with specific columns.
+    /// Writes structured dataset rows to JSONL, TSV, and CSV.
     /// </summary>
-    public class DataLogger : TextLogger
+    public class DataLogger
     {
-        private readonly HashSet<string> _columns = new();
+        private readonly StructuredLogFileSet<DatasetLogRecord> _logFileSet;
+        private readonly HashSet<string> _datasetColumns;
+        private readonly List<string> _orderedDatasetColumns;
         private readonly Dictionary<string, string> _currentRow = new();
-        private string _delimiter = ",";
+        private readonly string _datasetName;
+        private readonly Settings _settings;
+        private string _currentSubjectId = string.Empty;
+        private string _currentRunSessionId = string.Empty;
+        private int _rowCount;
 
-        /// <summary>
-        /// Begins logging a new data set with specified columns and delimiter.
-        /// </summary>
-        /// <param name="columns">The columns for the data set.</param>
-        /// <param name="delimiter">The delimiter to use between columns.</param>
-        public void Begin(List<string> columns, string delimiter = ",")
+        public DataLogger(string localDirectoryPath, string remoteDirectoryPath, string datasetName,
+            IReadOnlyList<string> columns, Settings settings)
         {
-            _delimiter = delimiter;
-            foreach (var column in columns)
-            {
-                _columns.Add(column);
-            }
-            LogData(string.Join(delimiter, columns));
+            _datasetName = datasetName;
+            _settings = settings;
+            _orderedDatasetColumns = columns
+                .Where(column => !string.IsNullOrWhiteSpace(column))
+                .Where(column => column != ExperimentMetadataColumns.SubjectId &&
+                                 column != ExperimentMetadataColumns.RunSessionId)
+                .ToList();
+            _datasetColumns = new HashSet<string>(_orderedDatasetColumns);
+
+            var fileColumns = StructuredLogging.BuildDatasetColumns(columns);
+            _logFileSet = new StructuredLogFileSet<DatasetLogRecord>(localDirectoryPath, remoteDirectoryPath,
+                datasetName, fileColumns,
+                record => StructuredLogging.BuildDatasetRow(record, _orderedDatasetColumns), settings.logging);
         }
 
-        /// <summary>
-        /// Sets a value for a specific column in the current row.
-        /// </summary>
-        /// <param name="column">The column to set the value for.</param>
-        /// <param name="value">The value to set.</param>
-        /// <exception cref="KeyNotFoundException">Thrown if the column is not found in the initialized columns.</exception>
+        public int RowCount => _rowCount;
+
         public void SetValue(string column, string value)
         {
-            if (!_columns.Contains(column))
+            var normalizedValue = NormalizeValue(value);
+
+            if (column == ExperimentMetadataColumns.SubjectId)
             {
-                throw new KeyNotFoundException($"Column {column} not found in initialized columns");
+                _currentSubjectId = normalizedValue;
+                return;
             }
-            _currentRow[column] = value;
+
+            if (column == ExperimentMetadataColumns.RunSessionId)
+            {
+                _currentRunSessionId = normalizedValue;
+                return;
+            }
+
+            if (!_datasetColumns.Contains(column))
+            {
+                throw new KeyNotFoundException($"Column {column} not found in initialized dataset columns");
+            }
+
+            _currentRow[column] = normalizedValue;
         }
 
-        /// <summary>
-        /// Logs the current row of data.
-        /// </summary>
         public void Log()
         {
-            var row = _columns.Select(column => _currentRow.GetValueOrDefault(column, "")).ToList();
-            LogData(string.Join(_delimiter, row));
+            var timestamp = LogTimestamp.CreateNow();
+            var record = new DatasetLogRecord
+            {
+                dataset_name = _datasetName,
+                ts_utc = timestamp.UtcIso8601,
+                ts_unix_ms = timestamp.UnixMilliseconds,
+                run_session_id = string.IsNullOrWhiteSpace(_currentRunSessionId)
+                    ? _settings.experiment.GetRunSessionIdOrCreate()
+                    : _currentRunSessionId,
+                subject_id = string.IsNullOrWhiteSpace(_currentSubjectId)
+                    ? _settings.experiment.GetSubjectIdOrDefault()
+                    : _currentSubjectId,
+                row = new Dictionary<string, string>(_currentRow)
+            };
+
+            _logFileSet.Log(record);
             _currentRow.Clear();
+            _currentSubjectId = string.Empty;
+            _currentRunSessionId = string.Empty;
+            _rowCount++;
         }
 
-        /// <summary>
-        /// Ends the logging of the current data set.
-        /// </summary>
         public async void End()
         {
             await StopAsync();
+        }
+
+        public async System.Threading.Tasks.Task StopAsync()
+        {
+            await _logFileSet.StopAsync();
+        }
+
+        private static string NormalizeValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+            {
+                return value.Substring(1, value.Length - 2).Replace("\"\"", "\"");
+            }
+
+            return value;
         }
     }
 }

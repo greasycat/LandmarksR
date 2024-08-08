@@ -53,6 +53,11 @@ namespace LandmarksR.Scripts.Experiment.Data
             var randomSeed = randomize ? DateTime.Now.Millisecond : 0;
             Logger.I("data", "Random seed: " + randomSeed);
 
+            foreach (var table in tables)
+            {
+                table.EnsurePrepared();
+            }
+
             if (hardMerge)
             {
                 foreach (var table in tables)
