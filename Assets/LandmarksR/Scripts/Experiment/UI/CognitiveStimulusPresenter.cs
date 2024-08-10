@@ -10,6 +10,7 @@ namespace LandmarksR.Scripts.Experiment.UI
     public class CognitiveStimulusPresenter : MonoBehaviour
     {
         private static CognitiveStimulusPresenter _instance;
+        private Color _centerTextColor = Color.white;
 
         private Canvas _canvas;
         private Image _background;
@@ -65,7 +66,17 @@ namespace LandmarksR.Scripts.Experiment.UI
             _rightText.gameObject.SetActive(false);
         }
 
-        public void ShowCenteredText(string content, Color color)
+        public void SetCenteredTextColor(Color color)
+        {
+            _centerTextColor = color;
+
+            if (_centerText != null)
+            {
+                _centerText.color = _centerTextColor;
+            }
+        }
+
+        public void ShowCenteredText(string content)
         {
             EnsureCanvas();
             SetCanvasVisible(true);
@@ -74,7 +85,13 @@ namespace LandmarksR.Scripts.Experiment.UI
             _rightText.gameObject.SetActive(false);
             _centerText.gameObject.SetActive(true);
             _centerText.text = content;
-            _centerText.color = color;
+            _centerText.color = _centerTextColor;
+        }
+
+        public void ShowCenteredText(string content, Color color)
+        {
+            SetCenteredTextColor(color);
+            ShowCenteredText(content);
         }
 
         public void ShowFlanker(string center, string flanker, Color centerColor, Color flankerColor, int flankCount = 2)
@@ -157,6 +174,7 @@ namespace LandmarksR.Scripts.Experiment.UI
             _leftText = CreateText(root, "LeftFlankerText", new Vector2(-280f, 0f), 92f, TextAlignmentOptions.Center);
             _centerText = CreateText(root, "CenterStimulusText", Vector2.zero, 120f, TextAlignmentOptions.Center);
             _rightText = CreateText(root, "RightFlankerText", new Vector2(280f, 0f), 92f, TextAlignmentOptions.Center);
+            SetCenteredTextColor(_centerTextColor);
         }
 
         private static Image CreateBackground(RectTransform parent)

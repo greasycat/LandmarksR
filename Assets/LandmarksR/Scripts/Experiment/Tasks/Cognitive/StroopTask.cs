@@ -13,10 +13,7 @@ namespace LandmarksR.Scripts.Experiment.Tasks.Cognitive
         protected override void PresentStimulus(CognitiveStimulusPresenter presenter, DataFrame trialData)
         {
             var word = CognitiveTrialDataUtilities.GetRequiredString(trialData, wordColumn, name);
-            var inkColorRaw = CognitiveTrialDataUtilities.GetRequiredString(trialData, inkColorColumn, name);
-            var inkColor = CognitiveTrialDataUtilities.ParseColor(inkColorRaw, Color.white);
-
-            presenter.ShowCenteredText(word, inkColor);
+            presenter.ShowCenteredText(word);
         }
 
         protected override IEnumerable<KeyValuePair<string, string>> GetTaskSpecificContext(DataFrame trialData)
