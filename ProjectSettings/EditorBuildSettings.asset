@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/LandmarksR/Scenes/Start Screen.unity
     guid: e18ce144349e48b4a95b280a151b0e7a
   - enabled: 1
+    path: Assets/LandmarksR/Scenes/Demo/NBackText.unity
+    guid: 99d2e5ead0cc961349150c98562bde0c
+  - enabled: 1
     path: Assets/PerspectiveTransformation/Scenes/PerspectiveTransformation.unity
     guid: 4fe93a676bebb854993442a1252d04fa
   m_configObjects:

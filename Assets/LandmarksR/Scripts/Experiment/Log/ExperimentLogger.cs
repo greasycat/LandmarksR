@@ -24,7 +24,6 @@ namespace LandmarksR.Scripts.Experiment.Log
         private Settings _settings;
         private readonly Dictionary<string, DataLogger> _dataLoggers = new();
         private string _runDirectoryPath;
-        private string _runDirectoryRelativePath;
 
         private void Awake()
         {
@@ -47,8 +46,7 @@ namespace LandmarksR.Scripts.Experiment.Log
             _settings.logging.ApplyDefaults();
             _settings.experiment.StartNewRunSession();
             _runDirectoryPath = GetRunDirectoryPath();
-            _runDirectoryRelativePath = GetRunDirectoryRelativePath();
-            _generalLogger = new StructuredLogFileSet<EventLogRecord>(_runDirectoryPath, _runDirectoryRelativePath,
+            _generalLogger = new StructuredLogFileSet<EventLogRecord>(_runDirectoryPath,
                 _settings.logging.GetEventBaseFileName(), StructuredLoggingDefaults.EventColumns,
                 StructuredLogging.BuildEventRow, _settings.logging);
 
@@ -78,8 +76,7 @@ namespace LandmarksR.Scripts.Experiment.Log
                 .Distinct()
                 .ToList();
 
-            var dataLogger = new DataLogger(_runDirectoryPath, _runDirectoryRelativePath, setName, normalizedColumns,
-                _settings);
+            var dataLogger = new DataLogger(_runDirectoryPath, setName, normalizedColumns, _settings);
             _dataLoggers.Add(setName, dataLogger);
 
             LogStructuredEvent("output", LogLevel.Info, "dataset_started", $"Dataset started: {setName}",
@@ -206,12 +203,6 @@ namespace LandmarksR.Scripts.Experiment.Log
         {
             var runSessionId = _settings.experiment.GetRunSessionIdOrCreate();
             return Path.Combine(Application.persistentDataPath, runSessionId);
-        }
-
-        private string GetRunDirectoryRelativePath()
-        {
-            var runSessionId = _settings.experiment.GetRunSessionIdOrCreate();
-            return $"{Application.productName}/{runSessionId}";
         }
 
         private async void OnDisable()

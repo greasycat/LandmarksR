@@ -16,12 +16,10 @@ namespace LandmarksR.Scripts.Experiment.Log
         private readonly LoggerQueue<string> _loggerQueue;
         private static readonly HttpClient HttpClient = new();
         private readonly string _logUrl;
-        private readonly string _filePath;
         private bool _ready;
 
-        public RemoteLogger(string filePath, string statusUrl, string logUrl, int flushingInterval = 100)
+        public RemoteLogger(string statusUrl, string logUrl, int flushingInterval = 100)
         {
-            _filePath = filePath;
             _logUrl = logUrl;
             _loggerQueue = new LoggerQueue<string>(WriteLogAsync, flushingInterval);
 
@@ -50,12 +48,8 @@ namespace LandmarksR.Scripts.Experiment.Log
 
         private async Task WriteLogAsync(string recordJson)
         {
-            var payload = JsonConvert.SerializeObject(new
-            {
-                filePath = _filePath,
-                record = JsonConvert.DeserializeObject(recordJson)
-            });
-
+            var parsedRecord = JsonConvert.DeserializeObject(recordJson);
+            var payload = JsonConvert.SerializeObject(parsedRecord);
             var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
             try

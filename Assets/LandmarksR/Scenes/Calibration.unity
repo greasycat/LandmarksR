@@ -689,8 +689,8 @@ MonoBehaviour:
   logging:
     localLogging: 1
     remoteLogging: 1
-    remoteStatusUrl: http://66.42.102.82:3000/status
-    remoteLogUrl: http://66.42.102.82:3000/log
+    remoteStatusUrl: http://127.0.0.1:8000/healthz
+    remoteLogUrl: http://127.0.0.1:8000/api/v1/records
     loggingIntervalInMillisecond: 200
     dataFileDelimiter: ','
     dataFileExtension: csv

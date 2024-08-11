@@ -497,8 +497,8 @@ namespace LandmarksR.Scripts.Experiment
         {
             localLogging = true,
             remoteLogging = false,
-            remoteStatusUrl = "http://localhost:3000/status",
-            remoteLogUrl = "http://localhost:3000/log",
+            remoteStatusUrl = "http://127.0.0.1:8000/healthz",
+            remoteLogUrl = "http://127.0.0.1:8000/api/v1/records",
             loggingIntervalInMillisecond = 200f,
             dataFileDelimiter = ",",
             dataFileExtension = "csv",

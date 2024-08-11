@@ -18,8 +18,7 @@ namespace LandmarksR.Scripts.Experiment.Log
         private string _currentRunSessionId = string.Empty;
         private int _rowCount;
 
-        public DataLogger(string localDirectoryPath, string remoteDirectoryPath, string datasetName,
-            IReadOnlyList<string> columns, Settings settings)
+        public DataLogger(string localDirectoryPath, string datasetName, IReadOnlyList<string> columns, Settings settings)
         {
             _datasetName = datasetName;
             _settings = settings;
@@ -31,8 +30,7 @@ namespace LandmarksR.Scripts.Experiment.Log
             _datasetColumns = new HashSet<string>(_orderedDatasetColumns);
 
             var fileColumns = StructuredLogging.BuildDatasetColumns(columns);
-            _logFileSet = new StructuredLogFileSet<DatasetLogRecord>(localDirectoryPath, remoteDirectoryPath,
-                datasetName, fileColumns,
+            _logFileSet = new StructuredLogFileSet<DatasetLogRecord>(localDirectoryPath, datasetName, fileColumns,
                 record => StructuredLogging.BuildDatasetRow(record, _orderedDatasetColumns), settings.logging);
         }
 

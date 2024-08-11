@@ -1361,7 +1361,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 1
     customValue: 
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/nofoil.tsv.txt
+  dataPath: ExperimentDesign/ViewpointTransformation/nofoil.tsv.txt
   indexesToExclude: 
 --- !u!4 &120390792
 Transform:
@@ -3582,7 +3582,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 1
     customValue: '%'
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective.tsv_output.txt
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective.tsv_output.txt
   indexesToExclude: 
 --- !u!4 &562456321
 Transform:
@@ -3699,7 +3699,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 0
     customValue: '%'
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective.tsv_output.txt
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective.tsv_output.txt
   indexesToExclude: 
 --- !u!43 &575873113
 Mesh:
@@ -4260,7 +4260,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 1
     customValue: 
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective_Part4.tsv
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective_Part4.tsv
   indexesToExclude: 
 --- !u!4 &657266131
 Transform:
@@ -5864,7 +5864,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 0
     customValue: 
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective_Part2.tsv
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective_Part2.tsv
   indexesToExclude: 
 --- !u!1 &878411366
 GameObject:
@@ -6323,7 +6323,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 1
     customValue: 
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective_Part3.tsv
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective_Part3.tsv
   indexesToExclude: 
 --- !u!1 &975847968
 GameObject:
@@ -13139,7 +13139,7 @@ MonoBehaviour:
   delimiterOption:
     delimiterIndex: 1
     customValue: 
-  dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/perspective_Part2.tsv
+  dataPath: ExperimentDesign/ViewpointTransformation/perspective_Part2.tsv
   indexesToExclude: 
 --- !u!4 &1969835071
 Transform:

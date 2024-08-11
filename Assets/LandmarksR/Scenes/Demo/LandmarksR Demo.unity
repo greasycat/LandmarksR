@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -269,9 +268,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faf5fddb2743487c97c13f3217acc1c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -322,9 +324,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4a0d3e6ace1477187152c6e929c5fb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -568,6 +573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8cac88cdaac4f3cb41afaedb245f7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  confirmKey: 13
 --- !u!1 &239480606
 GameObject:
   m_ObjectHideFlags: 0
@@ -612,16 +618,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5473342f8fba4c82b1a6e39bd4877d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
-  polePrefab: {fileID: 1443107895705549001, guid: eceee800935f9e34f995c354665112f0, type: 3}
-  polePosition: 3
-  pole: {fileID: 0}
 --- !u!1 &257296454
 GameObject:
   m_ObjectHideFlags: 0
@@ -1664,16 +1670,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5473342f8fba4c82b1a6e39bd4877d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
-  polePrefab: {fileID: 1443107895705549001, guid: eceee800935f9e34f995c354665112f0, type: 3}
-  polePosition: 2
-  pole: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1847,9 +1853,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4a0d3e6ace1477187152c6e929c5fb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -2105,16 +2114,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5473342f8fba4c82b1a6e39bd4877d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
-  polePrefab: {fileID: 1443107895705549001, guid: eceee800935f9e34f995c354665112f0, type: 3}
-  polePosition: 1
-  pole: {fileID: 0}
 --- !u!1 &1001466685
 GameObject:
   m_ObjectHideFlags: 0
@@ -2203,6 +2212,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8cac88cdaac4f3cb41afaedb245f7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  confirmKey: 13
 --- !u!114 &1001466690
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2337,11 +2347,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hudMode: 0
+  hudTransform: {fileID: 0}
   canvas: {fileID: 1100718061}
-  panel: {fileID: 157620665}
+  instructionPanel: {fileID: 0}
   titleText: {fileID: 332874259}
   contentText: {fileID: 528254094}
   confirmButton: {fileID: 257296456}
+  progressBar: {fileID: 0}
+  colliderTransform: {fileID: 0}
+  planeSurfaceTransform: {fileID: 0}
 --- !u!1 &1101482934
 GameObject:
   m_ObjectHideFlags: 0
@@ -2507,18 +2521,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f32155509b4f69a105657b0c48e8d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 0
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
-  useTable: 1
-  table: {fileID: 1338472977}
-  numberOfRepeat: 3
+  repeatOption:
+    useTable: 0
+    table: {fileID: 0}
+    numberOfRepeat: 3
+  outputSetName: defaultSet
+  outputColumns: []
   currentRepeat: 1
   currentSubTaskNumber: 1
+  showDebug: 1
 --- !u!1 &1271360364
 GameObject:
   m_ObjectHideFlags: 0
@@ -2646,16 +2667,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5473342f8fba4c82b1a6e39bd4877d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
-  polePrefab: {fileID: 1443107895705549001, guid: eceee800935f9e34f995c354665112f0, type: 3}
-  polePosition: 0
-  pole: {fileID: 0}
 --- !u!1 &1338472975
 GameObject:
   m_ObjectHideFlags: 0
@@ -2700,6 +2721,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07c0a15dd99947e7837bea1471e568b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  taskType: 3
+  id: 0
+  timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
+  elapsedTime: 0
+  isRunning: 0
+  isSubTaskRunning: 0
+  isCompleted: 0
+  randomize: 0
   rows:
   - 1,Capsule,Capsule
   - 2,Capsule,Capsule
@@ -2716,8 +2748,11 @@ MonoBehaviour:
   - TrialNumber
   - Source
   - Target
-  delimiter: ','
+  delimiterOption:
+    delimiterIndex: 0
+    customValue: 
   dataPath: C:/Users/error/WorkSpace/UCI/Own/QuestDemoPC/sample_data.csv
+  indexesToExclude: 
 --- !u!1001 &1343853327
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3079,9 +3114,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a728f20f5d9d4a198c2c47770f055962, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3089,7 +3127,7 @@ MonoBehaviour:
   instructionTitle: Calibration Instruction
   instructionContent: 'To calibrate the space accurately, follow these steps:
 
-    
+
 
     1.
     Place the controller on the floor and pull the trigger to start calibration.
@@ -3101,6 +3139,9 @@ MonoBehaviour:
 
     After completing the above steps, press the trigger
     again to finish the caliberation task.'
+  textAlignmentOptions: 260
+  opacity: 0.5
+  layersToHide: []
 --- !u!1 &1449127728
 GameObject:
   m_ObjectHideFlags: 0
@@ -3146,9 +3187,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f248ebc42f7542728c9b795071996326, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3233,9 +3277,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53685e0399f347308868e5e451c4c723, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3284,9 +3331,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eefffd57522c42389d193269ecf31914, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3337,9 +3387,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b50fd2489f5b41919cc2fcb27315ef7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3347,7 +3400,9 @@ MonoBehaviour:
   instructionTitle: Confirm Your Placements
   instructionContent: Check if the computed indicator matches the space center. Press
     trigger button again to confim. Press 'A' button to undo
-  calibrationResultPrefab: {fileID: 7662615807521707418, guid: 4b038fc031aed1b43867ca48b3d15a69, type: 3}
+  textAlignmentOptions: 260
+  opacity: 0.5
+  layersToHide: []
 --- !u!1 &1662631031
 GameObject:
   m_ObjectHideFlags: 0
@@ -3399,9 +3454,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4a0d3e6ace1477187152c6e929c5fb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
@@ -3529,6 +3587,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   experiment:
     participantId: default_participant_0
+  defaultDisplayMode: 1
   vrDisplay:
     displayMode: 1
     hudMode: 1
@@ -3539,8 +3598,15 @@ MonoBehaviour:
     hudMode: 0
     hudDistance: 1.5
     hudScreenSize: {x: 1920, y: 1080}
-  defaultDisplayMode: 1
+  displayReference:
+    displayMode: 0
+    hudMode: 0
+    hudDistance: 1.5
+    hudScreenSize: {x: 1920, y: 1080}
+  interaction:
+    hudColliderThickness: 0.05
   space:
+    calibrated: 0
     groundY: 0
     leftTop: {x: 0, y: 0, z: 0}
     rightTop: {x: 0, y: 0, z: 0}
@@ -3548,17 +3614,18 @@ MonoBehaviour:
     rightBottom: {x: 0, y: 0, z: 0}
     center: {x: 0, y: 0, z: 0}
     forward: {x: 0, y: 0, z: 0}
+  calibration:
+    controllerHeight: 0.15
   logging:
     localLogging: 1
     remoteLogging: 1
-    remoteStatusUrl: http://66.42.102.82:3000/status
-    remoteLogUrl: http://66.42.102.82:3000/log
+    remoteStatusUrl: http://127.0.0.1:8000/healthz
+    remoteLogUrl: http://127.0.0.1:8000/api/v1/records
     loggingIntervalInMillisecond: 200
-  displayReference:
-    displayMode: 0
-    hudMode: 0
-    hudDistance: 1.5
-    hudScreenSize: {x: 1920, y: 1080}
+    dataFileDelimiter: ','
+    dataFileExtension: csv
+  ui:
+    calibrationTriggerTime: 1.25
 --- !u!4 &1840446357
 Transform:
   m_ObjectHideFlags: 0
@@ -3869,13 +3936,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 100ea53573f94aac972eca8be62562d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
+  instructionTitle: 
+  instructionContent: 
+  textAlignmentOptions: 260
+  opacity: 0.5
+  layersToHide: []
 --- !u!1 &1930263597
 GameObject:
   m_ObjectHideFlags: 0
@@ -3920,14 +3995,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b3739eeb62f426680e24eb07af85f5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enable: 1
+  taskType: 3
   id: 0
   timer: Infinity
+  randomizeTimer: 0
+  minTimer: 0
+  maxTimer: 10
   elapsedTime: 0
   isRunning: 0
   isSubTaskRunning: 0
   isCompleted: 0
   target: 
+  targetNameColumn: Target
+  targetObjectTag: Target
 --- !u!1 &1939899251
 GameObject:
   m_ObjectHideFlags: 0

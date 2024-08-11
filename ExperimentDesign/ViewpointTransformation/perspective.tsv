@@ -1,0 +1,120 @@
+Type	Arg1	Arg2
+Permute Wall	ABDC	NA
+Permute Wall	ACBD	NA
+Permute Wall	ACDB	NA
+Permute Wall	ADBC	NA
+Permute Wall	ADCB	NA
+Permute Wall	BACD	NA
+Permute Wall	BADC	NA
+Permute Wall	BCAD	NA
+Permute Wall	BCDA	NA
+Permute Wall	BDAC	NA
+Permute Wall	BDCA	NA
+Permute Wall	CABD	NA
+Permute Wall	CADB	NA
+Permute Wall	CBAD	NA
+Permute Wall	CBDA	NA
+Permute Wall	CDAB	NA
+Permute Wall	CDBA	NA
+Permute Wall	DABC	NA
+Permute Wall	DACB	NA
+Permute Wall	DBAC	NA
+Permute Wall	DBCA	NA
+Permute Wall	DCAB	NA
+Permute Wall	DCBA	NA
+Swap Position	"Sphere, Capsule"	NA
+Swap Position	"Sphere, Cylinder"	NA
+Swap Position	"Sphere, Pyramid"	NA
+Swap Position	"Sphere, Cube"	NA
+Swap Position	"Capsule, Cylinder"	NA
+Swap Position	"Capsule, Pyramid"	NA
+Swap Position	"Capsule, Cube"	NA
+Swap Position	"Cylinder, Pyramid"	NA
+Swap Position	"Cylinder, Cube"	NA
+Swap Position	"Pyramid, Cube"	NA
+Swap Position	"Sphere, Capsule"	"Cylinder, Pyramid"
+Swap Position	"Sphere, Capsule"	"Cylinder, Cube"
+Swap Position	"Sphere, Capsule"	"Pyramid, Cube"
+Swap Position	"Sphere, Cylinder"	"Capsule, Pyramid"
+Swap Position	"Sphere, Cylinder"	"Capsule, Cube"
+Swap Position	"Sphere, Cylinder"	"Pyramid, Cube"
+Swap Position	"Sphere, Pyramid"	"Capsule, Cylinder"
+Swap Position	"Sphere, Pyramid"	"Capsule, Cube"
+Swap Position	"Sphere, Pyramid"	"Cylinder, Cube"
+Swap Position	"Sphere, Cube"	"Capsule, Cylinder"
+Swap Position	"Sphere, Cube"	"Capsule, Pyramid"
+Swap Position	"Sphere, Cube"	"Cylinder, Pyramid"
+Swap Position	"Capsule, Cylinder"	"Sphere, Pyramid"
+Swap Position	"Capsule, Cylinder"	"Sphere, Cube"
+Swap Position	"Capsule, Cylinder"	"Pyramid, Cube"
+Swap Position	"Capsule, Pyramid"	"Sphere, Cylinder"
+Swap Position	"Capsule, Pyramid"	"Sphere, Cube"
+Swap Position	"Capsule, Pyramid"	"Cylinder, Cube"
+Swap Position	"Capsule, Cube"	"Sphere, Cylinder"
+Swap Position	"Capsule, Cube"	"Sphere, Pyramid"
+Swap Position	"Capsule, Cube"	"Cylinder, Pyramid"
+Swap Position	"Cylinder, Pyramid"	"Sphere, Capsule"
+Swap Position	"Cylinder, Pyramid"	"Sphere, Cube"
+Swap Position	"Cylinder, Pyramid"	"Capsule, Cube"
+Swap Position	"Cylinder, Cube"	"Sphere, Capsule"
+Swap Position	"Cylinder, Cube"	"Sphere, Pyramid"
+Swap Position	"Cylinder, Cube"	"Capsule, Pyramid"
+Swap Position	"Pyramid, Cube"	"Sphere, Capsule"
+Swap Position	"Pyramid, Cube"	"Sphere, Cylinder"
+Swap Position	"Pyramid, Cube"	"Capsule, Cylinder"
+Rotate	Capsule	 Z-60
+Rotate	Capsule	 Z-30
+Rotate	Capsule	 X90
+Rotate	Capsule	 Z30
+Rotate	Capsule	 Z60
+Rotate	Capsule	 Z90
+Rotate	Pyramid	 X-60
+Rotate	Pyramid	 X-30
+Rotate	Pyramid	 X30
+Rotate	Pyramid	 X60
+Rotate	Pyramid	 X90
+Rotate	Pyramid	 Y30
+Rotate	Pyramid	 Y60
+Rotate	Pyramid	 Z-60
+Rotate	Pyramid	 Z-30
+Rotate	Pyramid	 Z30
+Rotate	Pyramid	 Z60
+Rotate	Pyramid	 Z90
+Rotate	Cube	 X45
+Rotate	Cube	 Y45
+Rotate	Cube	 Z45
+Rotate	Cylinder	 X-60
+Rotate	Cylinder	 X-30
+Rotate	Cylinder	 X30
+Rotate	Cylinder	 X60
+Rotate	Cylinder	 X90
+Rotate	Cylinder	 Z-60
+Rotate	Cylinder	 Z-30
+Rotate	Cylinder	 Z30
+Rotate	Cylinder	 Z60
+Rotate	Cylinder	 Z90
+Arrow	90	NA
+Arrow	180	NA
+Arrow	270	NA
+Arrow	90	NA
+Arrow	180	NA
+Arrow	270	NA
+Arrow	90	NA
+Arrow	180	NA
+Arrow	270	NA
+Arrow	90	NA
+Arrow	180	NA
+Arrow	270	NA
+Arrow	90	NA
+Arrow	180	NA
+Arrow	270	NA
+Swap Color	"Sphere, Capsule"	NA
+Swap Color	"Sphere, Cylinder"	NA
+Swap Color	"Sphere, Pyramid"	NA
+Swap Color	"Sphere, Cube"	NA
+Swap Color	"Capsule, Cylinder"	NA
+Swap Color	"Capsule, Pyramid"	NA
+Swap Color	"Capsule, Cube"	NA
+Swap Color	"Cylinder, Pyramid"	NA
+Swap Color	"Cylinder, Cube"	NA
+Swap Color	"Pyramid, Cube"	NA

@@ -1,0 +1,8 @@
+Type	Arg1	Arg2
+Rotate	Capsule	 X90
+Permute Wall	ABDC	
+No Foil	NA	NA
+Swap Position	"Sphere, Capsule"	
+Arrow	90	
+No Foil	NA	NA
+Swap Color	"Sphere, Capsule"	

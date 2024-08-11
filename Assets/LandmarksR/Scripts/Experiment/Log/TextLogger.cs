@@ -14,8 +14,7 @@ namespace LandmarksR.Scripts.Experiment.Log
         private readonly RemoteLogger _remoteLogger;
         private readonly IReadOnlyList<string> _columns;
 
-        public StructuredLogFileSet(string localDirectoryPath, string remoteDirectoryPath, string baseFileName,
-            IReadOnlyList<string> columns,
+        public StructuredLogFileSet(string localDirectoryPath, string baseFileName, IReadOnlyList<string> columns,
             Func<TRecord, Dictionary<string, string>> rowBuilder, LoggingSettings loggingSettings)
         {
             loggingSettings.ApplyDefaults();
@@ -52,9 +51,7 @@ namespace LandmarksR.Scripts.Experiment.Log
 
             if (loggingSettings.remoteLogging)
             {
-                var remoteFilePath = BuildRemoteFilePath(remoteDirectoryPath, jsonFileName);
-                _remoteLogger = new RemoteLogger(remoteFilePath,
-                    loggingSettings.remoteStatusUrl, loggingSettings.remoteLogUrl);
+                _remoteLogger = new RemoteLogger(loggingSettings.remoteStatusUrl, loggingSettings.remoteLogUrl);
             }
         }
 
@@ -102,16 +99,6 @@ namespace LandmarksR.Scripts.Experiment.Log
         public async ValueTask DisposeAsync()
         {
             await StopAsync();
-        }
-
-        private static string BuildRemoteFilePath(string directoryPath, string fileName)
-        {
-            if (string.IsNullOrWhiteSpace(directoryPath))
-            {
-                return fileName;
-            }
-
-            return Path.Combine(directoryPath, fileName).Replace('\\', '/');
         }
 
         private static bool IsFileEmpty(string filePath)
