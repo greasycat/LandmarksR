@@ -1,94 +1,172 @@
-# Data
-## DataFrame
+# Data and Logging
 
-If you have experience with the `pandas` Python package, you should be familiar with `pandas.DataFrame`. The `DataFrame` in LandmarksR serves a similar purpose but with fewer functionalities, as it is not intended for data analysis.
+LandmarksR separates trial definition from task logic. Tables describe rows of input data, `RepeatTask` advances through those rows, and `ExperimentLogger` writes output rows with stable run metadata.
 
-If you do not have any `pandas` experience, think of the `DataFrame` here as a 2D matrix that can hold more than just numerical data.
+## `DataFrame`
 
-Here's a simple data snippet:
+`DataFrame` is the in-memory table structure used throughout the framework. It stores rows as `List<object?>`, tracks column names through `ColumnNameMap`, and supports:
+
+- row append
+- column append
+- lookup by row and column index
+- lookup by row and column name
+- row extraction as a one-row `DataFrame`
+- horizontal and vertical merge operations
+
+It is intentionally lightweight. It is a runtime container for experiment data, not a full analysis library.
+
+## `TextTable`
+
+`TextTable` is the main way to load trial rows without writing custom parsing code.
+
+Current capabilities:
+
+- inline rows serialized in the inspector
+- loading from `dataPath`
+- optional header row handling
+- configurable delimiter through `DelimiterOption`
+- exclusion of row slices with `indexesToExclude`
+
+Important current detail: the inspector exposes a `randomize` field, but row randomization inside `TextTable.Parse()` is still marked `TODO` and is not currently implemented. If you need randomized iteration, do not rely on `TextTable.randomize` yet.
+
+## `MergedTable`
+
+`MergedTable` combines multiple source tables.
+
+Current options:
+
+- horizontal merge: combine columns from each table row-by-row
+- vertical merge: append rows from multiple tables
+- hard merge: build a new merged `DataFrame`
+- soft merge: iterate through source `DataFrame` objects through `DataEnumerator`
+- optional randomized enumeration order through a random seed
+
+Use `MergedTable` when a single trial row should be assembled from multiple table sources or when multiple trial blocks should behave like one logical table.
+
+## `DataEnumerator`
+
+`RepeatTask` does not read tables directly. It uses `DataEnumerator`, which supports:
+
+- sequential iteration over a single `DataFrame`
+- iteration over multiple `DataFrame` objects in vertical or horizontal merge mode
+- optional randomized row order when a non-zero seed is supplied
+
+For merged tables, `GetCurrent()` returns the active logical row, and `GetCurrentByTable(tableIndex)` lets code inspect the source-specific row.
+
+## `RepeatTask` as the Trial Driver
+
+`RepeatTask` is the main consumer-facing table task.
+
+It can run in two modes:
+
+- repeat by fixed count
+- repeat by row using a `Table`
+
+When `useTable` is enabled and a table is assigned:
+
+1. The table is prepared.
+2. `numberOfRepeat` is set to the table row count.
+3. Each `MoveNext()` advances to the next current row.
+4. Child tasks can read the current row through `CurrentData`.
+
+`RepeatTask` also exposes:
+
+- `CurrentTable`
+- `CurrentData`
+- `CurrentDataByTable(int tableIndex)`
+- `Context`, a per-repeat dictionary used to accumulate output values
+
+## Reading Table Values in Tasks
+
+Tasks usually read values from the current repeat row.
+
+Example:
 
 ```csharp
-var builder = new DataFrameBuilder();
-
-var df = builder.AddColumn(1, 2)
-	.AddColumn("John", "Alice")
-	.AddRow(3, "Bob")
-	.Build();
-
-// df will be built as
-/*
-1,John
-2,Alice
-3,Bob
-*/
-
-Debug.Log(df.GetValue<string>(0,1)) // Output: John
-Debug.Log(df.GetValue<int>(2,0)) // Output: 3
-```
-
-## `Table`
-
-`Table`s are Tasks that wrap around the `DataFrame`, allowing you to load, change, and save `DataFrame` objects directly. There are two types of tables available in the Unity editor:
-1. `TextTable`
-2. `MergedTable`
-
-### `TextTable`
-![TextTable](images/TextTable.png)
-
-`TextTable`s can be used to load trial information without the need for coding. In the illustration above, a `csv` file has been loaded into the serialized field of the editor. When you hit the play button or build and run the project, all the strings here will be assigned to the actual fields of the `TextTable`.
-
-### `MergedTable`
-![MergedTable.png](images/MergedTable.png)
-
-`MergedTable`s are used to combine separate `Table` objects. They can merge all `Table` objects, allowing you to consolidate your custom `Table` objects.
-
-You can choose the merge direction: 
-- Horizontally: Columns will be joined together.
-- Vertically: Rows will be joined together.
-
-By default, the merge only combines the indexes of the original table to save memory usage (soft merge). You can also perform a hard merge that copies the entire data.
-
-> [!IMPORTANT] 
-> The current version (v0.0.1) only allows a soft merge one single time. If you first merge 2 `TextTable`s into one table (Table A) and then merge 4 others into another table (Table B), and you want to merge Table A and Table B into Table C, you need to hard merge Table A and Table B. This limitation will be addressed in the next version.
-
-## How to Reference Values in Tables
-![RepeatTask.png](images/RepeatTask.png)
-
-To reference values from the Table, the simplest way is to use the `RepeatTask` component. This component allows you to select the Table you want to use in the Unity Inspector. When the `RepeatTask` starts, it reads each row of the Table as `CurrentData`. You can then obtain the desired column using built-in methods such as `GetFirstInColumn<string>`.
-
-These methods are covered in detail on the `DataFrame` page and in the API documentation. Here is a simple snippet as an example. This snippet sets the Current Target:
-
-```csharp
-// This is a part of an instruction task
-// This task intends to tell the participant what the target is
-// Other parts are omitted here
-// ...
-
-protected void Prepare()
+protected override void Prepare()
 {
-	SetTaskType(TaskType.Interactive);
-	base.Prepare();
+    SetTaskType(TaskType.Interactive);
+    base.Prepare();
 
-	// Get the RepeatTask
-	if (transform.parent.TryGetComponent<RepeatTask>(out var repeatTask))
-	{
-		var currentData = repeatTask.CurrentData;
-		var targetName = currentData.GetFirstInColumn<string>("TargetName");
-		HUD.SetContent("Your Target is: " + targetName);
-	}
+    var repeatTask = GetComponentInParent<RepeatTask>();
+    var currentData = repeatTask.CurrentData;
+    var targetName = currentData.GetFirstInColumn<string>("Target");
+
+    HUD.SetTitle("Navigation")
+        .SetContent($"Find target: {targetName}")
+        .ShowAll();
 }
-
-// ...
 ```
 
-## Output Data
+The exact helper methods depend on the `DataFrame` API, but the pattern is always the same: a task under `RepeatTask` reads the current row and uses those values to configure behavior.
 
-To output data, the simplest way is to use methods in `Logger` within the `RepeatTask`. The `Logger` has four methods:
+## Dataset Output
 
-1. `Logger.BeginDataset(outputSetName, outputColumns)`: Creates a CSV file with columns to output.
-2. `Logger.SetData(outputSetName, column, value)`: Sets the column value for the current output row.
-3. `Logger.LogDataRow(outputSetName)`: Flushes the rows to the CSV file.
-4. `Logger.EndDataset(outputSetName)`: Safely closes the file.
+`RepeatTask` opens a dataset in `Prepare()` by calling `Logger.BeginDataset(outputSetName, outputColumns)`.
 
-In `RepeatTask`, you can set the `outputSetName` and `outputColumns` in the Unity Inspector.
-![OutputParameters.png](images/OutputParameters.png)
+Current output behavior:
+
+- `run_session_id` is always included
+- `subject_id` is always included
+- tasks implementing `RepeatTask.IRepeatTaskOutputProvider` can add required columns automatically
+- one output row is written per repeat iteration
+- `Context` is cleared after each repeat
+
+For example, `CognitiveTrialTaskBase` contributes columns such as:
+
+- `trial_id`
+- `task_type`
+- `condition`
+- `stimulus`
+- `selected_response`
+- `correct_response`
+- `is_correct`
+- `has_response`
+- `reaction_time_ms`
+- task-specific columns such as `word`, `ink_color`, or `n_value`
+
+## Event Logs vs Dataset Logs
+
+LandmarksR now has two logging layers:
+
+### Event logs
+
+These are written by `ExperimentLogger` for lifecycle and general runtime events.
+
+Typical examples:
+
+- run session started
+- task started
+- task finished
+- dataset started
+- dataset finished
+
+### Dataset logs
+
+These are tabular outputs created through `BeginDataset`, `SetData`, `LogDataRow`, and `EndDataset`.
+
+Each row is wrapped with envelope columns such as:
+
+- `run_session_id`
+- `subject_id`
+- `ts_utc`
+- `ts_unix_ms`
+- `dataset_name`
+
+## Output Formats
+
+Current logging settings support:
+
+- JSON Lines for canonical structured event output
+- TSV exports
+- CSV exports
+
+Export options are controlled by `Settings.logging`.
+
+## Where Output Is Written
+
+By default, run output is created under:
+
+`Application.persistentDataPath/<runSessionId>/`
+
+That directory contains the event log and any datasets opened during the run.

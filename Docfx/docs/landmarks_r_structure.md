@@ -1,37 +1,87 @@
 # LandmarksR Unity Structure
-Let's first break down the framework structure inside the Unity Editor
 
-# Overall Structure
-Here's a screenshot of an project
+This page describes the current scene layout used by the framework and the conventions that tasks rely on at runtime.
 
-![](images/framework_unity_structure.png)
+## Minimal Runtime Scene
 
-| GameObject                                            | Required By LandmarksR | Purpose                                                                    | Assigned/Required Tag |
-| ----------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------- | --------------------- |
-| Directional Light                                     | No                     | Lighting                                                                   | NA                    |
-| Settings                                              | Yes (optional)         | Configuration for the current scene, but optional if you use Startup Scene | NA                    |
-| ExperimentLogger                                      | Yes (optional)         | Logging system for the current, option if you use Startup Scene            | NA                    |
-| LandmarksR                                            | Yes                    | Has Experiment.cs attached, entry point for the framework                  | NA                    |
-| LandmarksR.PlayerController                           | Yes                    | Controller for player interaction and canvas display                       | NA                    |
-| LandmarksR<br>.PlayerController<br>.VRController      | Yes                    | Sub Controller for VR interaction                                          | Player                |
-| LandmarksR<br>.PlayerController<br>.DesktopController | Yes                    | Sub Controller for desktop interaction                                     | Player                |
-| LandmarksR<br>.PlayerController<br>.Hud               | Yes                    | Controlling                                                                |                       |
-| LandmarksR.CalibrationSpace                           | Yes (VR only)          | (VR only) Calibration environment of the headset                           | Calibration           |
-| LandmarksR.Environment                                | Yes                    | Environment to place all your GameObjects                                  | Environment           |
-| RootTask                                              | Yes                    | Entry point for all the `Task`                                             | RootTask              |
-| PointableCanvasModule                                 | Yes                    | Input Module with VR support                                               | NA                    |
+The smallest practical LandmarksR scene has these objects:
 
-# Where to add your own `GameObject`/Scripts
+| GameObject or Asset | Required | Purpose |
+| --- | --- | --- |
+| `LandmarksR` with `Experiment` | Yes | Scene bootstrapper. Starts the task graph once the player systems are ready. |
+| `PlayerController` prefab | Yes | Contains the desktop rig, VR rig, `HUD`, and `PlayerEventController`. |
+| `RootTask` tagged `RootTask` | Yes | Entry point for the task hierarchy. |
+| `Environment` tagged `Environment` | Usually | Parent for experiment geometry and the object moved by calibration. |
+| `ExperimentLogger` | Strongly recommended | Creates run-scoped event and dataset output. |
+| `Settings` | Strongly recommended | Stores subject metadata, display mode, logging options, and calibration state. |
+| `PointableCanvasModule` prefab | VR scenes | Enables world-space UI interaction in Quest scenes. |
+| `Calibration Space` prefab tagged `Calibration` | VR calibration scenes | Visual reference space used by calibration tasks. |
 
-There will be a time when you want to more `GameObject`s and Scripts. To do this, first decide what kind of `GameObject` you want to add
+`Settings` and `ExperimentLogger` are written as singleton scene services. When present, they are kept alive across scene loads with `DontDestroyOnLoad`.
 
-- if the `GameObject` is an UI Object that needs to be displayed on HUD, add it under the `HUD` and change the `Hud.cs`
+## Required Tags
 
-> [! NOTE]
-> Future version may implement option  to add your own component without modifying the `Hud.cs` 
+Several systems use tag lookup instead of serialized references. The current runtime expects these tags when the related features are used:
 
+| Tag | Used By | Notes |
+| --- | --- | --- |
+| `RootTask` | `Experiment` | Required in every playable experiment scene. |
+| `Environment` | `SpaceSettings.ApplyToEnvironment`, interactive tasks | Recommended for all experiment scenes. |
+| `Calibration` | calibration flow | Required if you use `CalibrateTask` or `ApplyCalibrationTask`. |
+| `Target` | `NavigationTask` | Applied to navigable target objects. |
+| `PlayerCollider` | `GoToFootprintTask` | Used to detect when the participant is on the footprint. |
+| `Floor` | `GoToFootprintTask` | Floor objects remain visible while other environment objects are hidden. |
 
-- if the `GameObject` is a UI Object that is placed somewhere in the environment, add it under the `Environment`
-- if the `GameObject` is a non-UI Object but not a model you want to render, put it outside of the `LandmarksR`
-- if the `GameObject` is a 3D model you want to render, put it inside the Environment and tag it properly
+## Typical Hierarchy Shape
 
+The demo scenes follow this general layout:
+
+```text
+LandmarksR
+|- Experiment
+|- PlayerController
+|- Calibration Space (VR scenes only)
+Environment
+ExperimentLogger
+Settings
+RootTask
+|- SubjectRegistryTask / InstructionTask / CollectionTask / RepeatTask ...
+```
+
+The exact object names vary by scene, but the service roles above are stable.
+
+## Scene Assets in the Repository
+
+Current LandmarksR scenes on disk:
+
+- `Assets/LandmarksR/Scenes/Start Screen.unity`
+- `Assets/LandmarksR/Scenes/Calibration.unity`
+- `Assets/LandmarksR/Scenes/Demo/LandmarksR Demo.unity`
+- `Assets/LandmarksR/Scenes/Demo/NBackText.unity`
+- `Assets/LandmarksR/Scenes/Demo/StroopText.unity`
+
+Important detail: the current Build Settings do not include every LandmarksR scene. If you want the build to advance from a demo scene to another experiment scene, update Build Settings explicitly.
+
+## Creating a New Scene
+
+1. Create an empty GameObject named `LandmarksR`.
+2. Add the `Experiment` component to it.
+3. Drag `Assets/LandmarksR/Prefabs/Core/PlayerController.prefab` under `LandmarksR`.
+4. Assign that prefab instance to `Experiment.playerController`.
+5. Create an `Environment` GameObject and tag it `Environment`.
+6. Create a `RootTask` from `GameObject/Experiment/Tasks/1. RootTask` and tag it `RootTask`.
+7. Add `Settings` and `ExperimentLogger` objects unless another bootstrap scene is responsible for them.
+8. For VR scenes, add `Assets/LandmarksR/Prefabs/Core/PointableCanvasModule.prefab`.
+9. For VR calibration scenes, also add `Assets/LandmarksR/Prefabs/Calibration/Calibration Space.prefab`.
+
+## Where to Place Your Own Objects
+
+- Put world-space experiment geometry under `Environment` so calibration can reposition the whole setup.
+- Put HUD-facing UI inside the `PlayerController` HUD hierarchy, or drive it through `Hud.cs`.
+- Put task objects under `RootTask` or under other structural tasks.
+- Put trigger objects for navigation-style tasks in the scene with the expected tags, usually under `Environment`.
+- Put reusable runtime prefabs in `Assets/LandmarksR/Prefabs` or your own prefab folder, not inside a scene-specific hierarchy.
+
+## Start Screen Notes
+
+`Start Screen.unity` is not a generic magic bootstrap scene. Its `StartScreen` script expects one or more `Settings` assets available through `Resources.LoadAll<Settings>("Settings")`. If you want to use that scene in practice, create a `Settings` prefab or asset under `Assets/**/Resources/Settings/`.

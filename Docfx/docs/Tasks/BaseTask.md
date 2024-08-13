@@ -1,142 +1,175 @@
 # BaseTask
-![BaseTask.png](../images/BaseTask.png)
 
----
+`BaseTask` is the common lifecycle class for almost every experiment action in LandmarksR. If you write a custom task, this is the class you inherit from.
 
+![BaseTask](../images/BaseTask.png)
 
-`BaseTask` is the template for any other tasks in Unity. It inherits from `MonoBehaviour`, so it works like any other Unity script.
+## What `BaseTask` Provides
 
-The `BaseTask` follows this working logic (as illustrated in the figure above):
+Every `BaseTask` instance gets:
 
-1. **Initialization**: When the task is activated by Unity, the `Start()` method is called. This method loads all child tasks (if any) and assigns them to the `_subTasks` list.
-2. **Execution Trigger**: An external script, such as an Experiment, calls the `BaseTask.ExecuteAll()` method to start the task.
-3. **Preparation**: The task prepares itself by initializing necessary references and settings through the `Prepare()` method.
-4. **Execution**: The task waits for a specified timer or other methods to stop the task. During this period, the task performs its designated functions.
-5. **Child Task Execution**: If there are any child tasks, the task runs them sequentially.
-6. **Cleanup**: Once the task completes its execution or is stopped, the `Finish()` method is called to clean up resources and reset any modified states.
+- a resolved `Settings` singleton
+- a resolved `Experiment` singleton
+- the active `PlayerController`
+- the active `PlayerEventController`
+- the shared `HUD`
+- the shared `ExperimentLogger`
+- ordered child task discovery through `_subTasks`
+- timer support
+- task lifecycle state such as running, prepared, and completed flags
 
-## Structure of `BaseTask`
+## Lifecycle
 
-### Member Variables
+The current lifecycle is:
 
-| Variable               | Purpose                                                                             |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `taskType`             | The type of the task: `Structural`, `Functional`, `Interactive`                     |
-| `id`                   | (currently not supported) Resume identifier                                         |
-| `Settings`             | Reference to `Settings` instance                                                    |
-| `Experiments`          | Reference to `Experiment` instance                                                  |
-| `Player`               | Reference to `Player` instance                                                      |
-| `PlayerEvent`          | Reference to `PlayerEvent` instance                                                 |
-| `HUD`                  | Reference to `HUD` instance                                                         |
-| `_subTasks`            | A collection of all child tasks                                                     |
-| `timer`                | The maximum time the task can run                                                   |
-| `randomizedTimer`      | Boolean value to use a randomized timer                                             |
-| `minTimer`             | Minimum value for the randomizer                                                    |
-| `maxTimer`             | Maximum value for the randomizer                                                    |
-| `elapsedTime`          | Time passed since the task started                                                  |
-| `isRunning`            | Boolean value checked every frame; if set to `false`, the task will end             |
-| Other `bool` Variables | Additional status flags for various functionalities                                 |
+1. `Awake()` marks the task as enabled.
+2. `Start()` collects child `BaseTask` components in hierarchy order.
+3. `ExecuteAll()` calls `Prepare()`.
+4. `Prepare()` resolves shared services, logs task start, resets elapsed time, and starts the timer.
+5. The task stays alive while `isRunning` is true.
+6. Once the task stops, `ExecuteAll()` runs child tasks in order unless a specialized task overrides that flow.
+7. `Finish()` logs task completion and clears lifecycle flags.
 
-### Methods
+## Task Types
 
-#### `Start()`
-The `Start()` method performs the following:
-1. Reads all child `Transform` components of the `GameObject` to which the task script is attached.
-2. Sorts these child objects as they appear in the Unity Inspector.
-3. Obtains a `BaseTask` component from each child `GameObject` and adds them to a list.
-4. Assigns this list to the member variable `_subTasks`.
+`BaseTask` uses `TaskType` to control default execution behavior:
 
-#### `Prepare()`
-The `Prepare()` method prepares the task for execution:
-1. Gets references to all core components, including `Settings`, `Experiment`, `Player`, `PlayerEvent`, `HUD`, and `Logger`.
-2. Sets the running mode of the task based on `taskType`:
-   - For `Functional` and `Structural` types, it calls `Finish()` or, if it has children, calls each child's `ExecuteAll()` method before `Finish()`.
-   - For `Interactive` types, it blocks the experiment after `Prepare()` until the timer ends or another trigger calls `StopCurrentTask()`.
-3. If `randomizedTimer` is `true`, sets a random timer value between `minTimer` and `maxTimer`.
-4. Calls the `StartTimer()` method to time the task.
+| Type | Behavior |
+| --- | --- |
+| `Structural` | `Prepare()` marks the task as not running, so `ExecuteAll()` immediately advances into child tasks. |
+| `Functional` | Same as structural by default: perform setup work, then finish. |
+| `Interactive` | Remains running until the timer ends or the task calls `StopCurrentTask()`. |
+| `NotSet` | Logs an error and should be treated as a misconfigured task. |
 
-#### `Finish()`
-The `Finish()` method clears up after the task:
-1. Sets `isCompleted` to `true` and logs a message.
-2. For any other task, manually clear up the following:
-   - Unregister any `PlayerEvent` actions registered in `Prepare()`.
-   - Reset any changes made to `HUD`.
-   - Restore any changes made to the camera mask.
+That is why almost every derived task sets its type before calling `base.Prepare()`.
 
-#### `ExecuteAll()`
-This method runs the `Prepare()` and `Finish()` methods for the task. It also loops over all child tasks and runs them sequentially. The `Finish()` method for each task runs only after all children's `Finish()` methods have been called.
+## Important Members
 
-#### `StopCurrentTask()`
-This method sets the task's running status to `need to be stopped`.
+| Member | Purpose |
+| --- | --- |
+| `taskType` | Declares whether the task is structural, functional, or interactive. |
+| `timer` | Maximum run time before the task auto-stops. |
+| `randomizeTimer` | Enables randomized timer selection between `minTimer` and `maxTimer`. |
+| `elapsedTime` | Tracks task time while the timer coroutine runs. |
+| `_subTasks` | Ordered list of child tasks. |
+| `Logger` | Shared `ExperimentLogger` instance. |
+| `HUD` | Shared HUD controller. |
+| `PlayerEvent` | Shared input registration layer. |
 
-#### `StartTimer()`
-This method starts a timer based on the timer fields. When the timer reaches its limit, the task stops.
+## Core Methods
 
-## Example: Creating a New Instruction Task
+### `Prepare()`
 
-Here's how to create a new instruction task using `BaseTask`:
+The base implementation:
+
+- resolves the current scene services
+- asserts that required references are present
+- logs `(<taskName>) Started`
+- initializes timer state
+- starts the timer coroutine
+- sets the initial running behavior from `taskType`
+
+Derived tasks usually:
+
+1. call `SetTaskType(...)`
+2. call `base.Prepare()`
+3. register handlers, set HUD state, or start coroutines
+
+### `ExecuteAll()`
+
+The default implementation:
+
+- skips disabled tasks
+- calls `Prepare()`
+- waits until `isRunning` becomes false
+- executes each child task in order
+- calls `Finish()`
+
+Specialized structural tasks such as `CollectionTask` and `RepeatTask` override this method because they need different child execution behavior.
+
+### `Finish()`
+
+The base implementation:
+
+- logs `(<taskName>) Finished`
+- marks the task completed
+- clears the prepared flag
+
+Derived tasks are responsible for undoing their own side effects, such as:
+
+- unregistering input handlers
+- clearing HUD text
+- restoring hidden layers
+- stopping or destroying temporary objects
+
+### `Reset()`
+
+`Reset()` clears completion and preparation state. `RepeatTask` uses this after each repeat so child tasks can run again.
+
+### `StopCurrentTask()`
+
+This is the normal way for an interactive task to finish early. It simply sets `isRunning` to `false`, allowing `ExecuteAll()` to continue.
+
+### `IsTaskRunning()`
+
+Returns the current run state. Tasks that update every frame, such as `GoToFootprintTask`, use this to avoid running update logic when inactive.
+
+## Timer Behavior
+
+`BaseTask` starts a timer coroutine in `Prepare()`. While both conditions are true:
+
+- `elapsedTime < timer`
+- `isRunning == true`
+
+the task stays active and `elapsedTime` increases by `Time.deltaTime`.
+
+When the timer completes, `isRunning` becomes `false`.
+
+Implications:
+
+- interactive tasks can naturally time out
+- functional and structural tasks usually finish immediately because `Prepare()` sets `isRunning` to `false`
+- tasks with custom coroutines can still call `StopCurrentTask()` before the timer expires
+
+## Example Custom Task
 
 ```csharp
-using UnityEngine;
 using LandmarksR.Scripts.Experiment.Tasks;
+using UnityEngine;
 
 public class SimpleInstructionTask : BaseTask
 {
     protected override void Prepare()
     {
-        // Set the task type to Interactive
         SetTaskType(TaskType.Interactive);
-
-        // Call the base class's Prepare() method
         base.Prepare();
 
-        // Set the title and content for the HUD
-        HUD.SetTitle("A simple title").SetContent("ABCDEFG");
+        HUD.SetTitle("Ready")
+            .SetContent("Press Enter or the trigger to continue.")
+            .ShowAll();
 
-        // Register the OnConfirm action, which will be called when the user hits the confirm button
         PlayerEvent.RegisterConfirmHandler(OnConfirm);
     }
 
-    protected override void Finish()
+    public override void Finish()
     {
-        // Call the base class's Finish() method
         base.Finish();
-
-        // Unregister the OnConfirm action
         PlayerEvent.UnregisterConfirmHandler(OnConfirm);
-
-        // Clear the title and text from the HUD
         HUD.ClearAllText();
     }
 
     private void OnConfirm()
     {
-        // Stop the current task
         StopCurrentTask();
     }
 }
 ```
 
-### Explanation
+## When to Override `ExecuteAll()`
 
-- The notation `: BaseTask` tells the compiler that your `SimpleInstructionTask` inherits from the `BaseTask` template (class).
-- The `Prepare()` method is overridden to customize the task:
-  - `SetTaskType` sets the type to `Interactive` so the task runs until `StopCurrentTask` is manually called.
-  - `base.Prepare()` initializes all core component fields.
-  - `HUD.SetTitle().SetContent()` sets the title and content text for the HUD.
-  - `PlayerEvent.RegisterConfirmHandler()` registers the `OnConfirm` action, defined below.
-- The `Finish()` method cleans up after the task:
-  - Calls `base.Finish()`, which logs the `Finish()` action by default.
-  - `PlayerEvent.UnregisterConfirmHandler()` unregisters the `OnConfirm` action.
-  - `HUD.ClearAllText` sets all text in the HUD to empty strings.
+Most custom tasks should not override `ExecuteAll()`. Override it only when the task must control child execution itself, for example:
 
-This structure ensures that your tasks are well-organized and maintainable.
+- iterating trials from a table, as `RepeatTask` does
+- moving backward or forward through a linked child list, as `CollectionTask` does
 
-
-
-
-
-
-
-
-
+For normal instruction, response, or stimulus tasks, overriding `Prepare()` and `Finish()` is enough.

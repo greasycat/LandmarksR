@@ -1,47 +1,130 @@
-# Task in LandmarksR
+# Tasks in LandmarksR
 
-Tasks in LandmarksR are the building blocks of your experiment. If you have experience with the older version of Landmarks, you should be familiar with them. Simply drag and drop them in the inspector, and you'll have a fully functioning experiment.
+Tasks are the units of experiment flow in LandmarksR. Every task inherits from `BaseTask`, which means every task participates in the same prepare-run-finish lifecycle and can be arranged directly in the Unity hierarchy.
 
-Currently, we support the following tasks, categorized into three groups (excluding `BaseTask`):
-- **Structural**
-- **Functional**
-- **Interactive**
+## How Task Execution Works
 
-Some Functional or Interactive Tasks must be a child of Structural Tasks, meaning you need to place them under the corresponding parent task in the Unity Inspector.
+- `RootTask` is the entry point for a scene.
+- Structural tasks decide how child tasks are executed.
+- Functional tasks perform one-off actions and finish immediately.
+- Interactive tasks stay active until a timer expires or they call `StopCurrentTask()`.
+- `RepeatTask` is the bridge between tables and trials, because it advances rows and writes dataset output.
 
-### Structural Tasks
+## Commonly Created Tasks
 
-Structural tasks are used to organize your other tasks, allowing them to hold multiple sub-tasks.
+The current editor hierarchy menu exposes these entries under `GameObject/Experiment/Tasks/`:
 
-| Task Name       | Purpose                                                                                              |
-| --------------- | ---------------------------------------------------------------------------------------------------- |
-| RootTask        | The root folder for placing all your tasks                                                           |
-| CollectionTask  | A subfolder for grouping multiple tasks                                                              |
-| RepeatTask      | A task that repeats multiple times, useful for making trials by iterating over rows in a table       |
-| CalibrationTask | A task used for space calibration in VR mode                                                         |
+- `RootTask`
+- `CollectionTask`
+- `InstructionTask`
+- `SubjectRegistryTask`
+- `RepeatTask`
+- `ExploreTask`
+- `NBackTask`
+- `StroopTask`
+- `FlankerTask`
+- `PrimitiveSequenceTask2D`
+- `PrimitiveSequenceTask3D`
 
-### Functional Tasks
+Several other tasks exist in code and in demo scenes even though they are not currently exposed in that creation menu.
 
-Functional tasks perform a single or a set of actions. They are executed once unless duplicated in the Unity Inspector.
+## Structural Tasks
 
-| Task Name       | Purpose                                  |
-| --------------- | ---------------------------------------- |
-| InstructionTask | A task that displays text instructions   |
+| Task | Purpose | Notes |
+| --- | --- | --- |
+| `RootTask` | Starts the task hierarchy for the scene. | When it finishes, it loads the next build scene if one exists, otherwise it quits play mode or the app. |
+| `CollectionTask` | Runs child tasks in order. | Also supports moving back to the previous task node during calibration flows. |
+| `RepeatTask` | Repeats child tasks by count or by table row. | Writes dataset output and exposes `CurrentData` plus `Context`. |
+| `CalibrateTask` | Specialized structural flow for VR room calibration. | Inherits from `CollectionTask` and coordinates floor, pole, and confirmation steps. |
 
-### Interactive Tasks
+## Functional Tasks
 
-Interactive tasks handle interactions between the application and the participant within a given context. For example, in a typical Wayfinding experiment, where the participant must find a target, an interactive task should be used.
+| Task | Purpose | Notes |
+| --- | --- | --- |
+| `TeleportTask` | Teleports the player to a fixed position and rotation. | Mainly useful in desktop scenes. |
+| `ApplyCalibrationTask` | Applies saved calibration data to the environment and calibration space. | Only acts if `Settings.space.calibrated` is true. |
+| `SetStimulusTextColorTask` | Changes the color used by the cognitive stimulus presenter. | Must live under a `RepeatTask` and reads its color value from the current trial row. |
 
-| Task Name         | Purpose                                                                         | Must be a Child of |
-| ----------------- | ------------------------------------------------------------------------------- | ------------------ |
-| ExploreTask       | Allows exploration of an environment within a given time limit                  | NA                 |
-| NavigationTask    | Requires the participant to locate a target by walking to it                    | RepeatTask         |
-| GoToFootprintTask | Requires the participant to step on a footprint texture                        | NA                 |
+## Interactive Tasks
 
-> Note: Calibration related task are omitted here as they should only be modified when absolutely necessary.
+| Task | Purpose | Notes |
+| --- | --- | --- |
+| `InstructionTask` | Shows instruction text and waits for confirm. | Uses the shared HUD and confirm input. |
+| `SubjectRegistryTask` | Captures the subject ID inside the scene. | Also shows the current run session ID if enabled. |
+| `ExploreTask` | Lets the participant explore for a timed period. | Enables movement and hides the HUD after a delay. |
+| `NavigationTask` | Waits until the participant reaches a tagged target. | Usually placed under a `RepeatTask` so it can read the current target from table data. |
+| `GoToFootprintTask` | Requires the participant to stand on a footprint and align orientation. | Uses the `Footprint` prefab and `PlayerCollider` trigger checks. |
 
-###   `BaseTask`
+## Cognitive Trial Tasks
 
-We have placed the introduction of `BaseTask` at the end because it is the most crucial task of all. To create other tasks effectively, you must thoroughly understand every aspect of `BaseTask`. This introduction will provide a structural overview through a diagram. For detailed information, refer to the [BaseTask](Tasks/BaseTask.md) Page.
+These tasks all inherit from `CognitiveTrialTaskBase` and are intended to live under a `RepeatTask`.
 
-![BaseTask](images/BaseTask.png)
+| Task | Stimulus Type | Expected Trial Data |
+| --- | --- | --- |
+| `NBackTask` | Centered text stimulus | `stimulus`, `correct_response`, optional timing columns, optional `n_value` |
+| `StroopTask` | Centered word stimulus | `word`, `ink_color`, `correct_response`, optional timing columns |
+| `FlankerTask` | Flanker layout | `center_symbol`, `flanker_symbol`, `correct_response`, optional timing columns |
+
+Shared behavior provided by `CognitiveTrialTaskBase`:
+
+- fixation period
+- timed stimulus presentation
+- timed response window
+- key-to-response mapping
+- evaluation of correctness and response presence
+- automatic addition of trial output columns to the parent `RepeatTask`
+
+## Calibration Tasks
+
+The current VR calibration flow is built from these task classes:
+
+- `PlaceFloor`
+- `PlacePoll`
+- `ConfirmCalibration`
+- `ReconfirmCalibration`
+
+These tasks depend on Quest button handlers from `PlayerEventController`, the `Calibration Space` prefab, and the `Environment` plus `Calibration` tags.
+
+## Primitive Sequence Tasks
+
+`PrimitiveSequenceTask2D` and `PrimitiveSequenceTask3D` run scripted sequences against scene targets identified by `target_id`.
+
+Supported operations currently include:
+
+- `Translate`
+- `Rotate`
+- `Scale`
+- `Color`
+- `Visibility`
+- `Custom`
+
+Sequence tables must include at least:
+
+- `sequence`
+- `timestamp_ms`
+- `target_id`
+- `operation`
+
+## Debug and Support Tasks
+
+There are also debug-oriented scripts such as `DummyTask`, `TestingTask`, `HUDTestingTask`, and `VRInputTestingTask`. They are useful for local development, but they are not core building blocks for experiment design and are not documented here as production workflow components.
+
+## Choosing the Right Container
+
+- Use `CollectionTask` when you want a fixed ordered list of tasks.
+- Use `RepeatTask` when child tasks should run once per trial row or once per repeat count.
+- Use cognitive tasks only under a `RepeatTask`, because they require `CurrentData` and write into `RepeatTask.Context`.
+- Use calibration tasks only inside a `CalibrateTask`.
+
+## Writing Your Own Task
+
+If you need behavior that is not covered by the built-in tasks:
+
+1. Create a new component that inherits from `BaseTask`.
+2. Set the task type in `Prepare()`.
+3. Call `base.Prepare()` to resolve `Settings`, `Player`, `PlayerEvent`, `HUD`, and `Logger`.
+4. Register any input or trigger handlers you need.
+5. Call `StopCurrentTask()` when the task should complete.
+6. Clean up handlers and HUD state in `Finish()`.
+
+See `Tasks/BaseTask.md` for the lifecycle details.

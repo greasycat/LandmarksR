@@ -10,7 +10,7 @@
         }
       ],
       "dest": "api",
-	  "allowCompilationErrors": true
+      "allowCompilationErrors": true
     }
   ],
   "build": {
@@ -33,8 +33,8 @@
     ],
     "output": "../_site",
     "template": [
-	  "default",
-	  "modern",
+      "default",
+      "modern"
     ],
     "globalMetadata": {
       "_appName": "LandmarksR Documentation",
@@ -42,11 +42,11 @@
       "_enableSearch": true,
       "pdf": false
     },
-	        "xref": [
-            "https://normanderwan.github.io/UnityXrefMaps/xrefmap.yml"
-        ],
-        "xrefService": [
-            "https://xref.docs.microsoft.com/query?uid={uid}"
-        ],
+    "xref": [
+      "https://normanderwan.github.io/UnityXrefMaps/xrefmap.yml"
+    ],
+    "xrefService": [
+      "https://xref.docs.microsoft.com/query?uid={uid}"
+    ]
   }
 }

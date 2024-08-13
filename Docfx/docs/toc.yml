@@ -6,6 +6,9 @@ items:
   - href: core_components.md
   - href: tasks.md
   - href: data.md
+  - href: Quick Introduction to Quest.md
+  - href: Quest Calibration.md
+  - href: Unit Testing.md
 - name: Task Details
   items:
   - href: Tasks/BaseTask.md
