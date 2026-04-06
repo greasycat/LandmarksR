@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "landmarksr-logs"
+version = "0.1.0"
+description = "FastAPI log sink and analysis client for LandmarksR experiment data."
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.111,<1.0",
+  "httpx>=0.27,<1.0",
+  "pandas>=2.2,<3.0",
+  "pydantic>=2.7,<3.0",
+  "uvicorn>=0.30,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9.0",
+]
+
+[project.scripts]
+landmarksr-log-server = "landmarksr_logs.server:main"
+landmarksr-log-client = "landmarksr_logs.client:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

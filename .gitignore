@@ -77,3 +77,9 @@ _site
 # generated API yaml
 
 /Docfx/api
+/Server/.pytest_cache/
+/Server/data/logs/
+/Server/.venv/
+/Server/src/*.egg-info/
+/Server/src/**/__pycache__/
+/Server/tests/__pycache__/
