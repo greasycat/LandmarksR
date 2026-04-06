@@ -1,23 +1,13 @@
 # LandmarksR
 
-LandmarksR is a lightweight Unity framework for building spatial cognition and perception experiments on desktop and Meta Quest.
+LandmarksR is a lightweight Unity framework for building psychology experiments.
 
-## What It Provides
-
-- Task-based experiment flow built directly in the Unity hierarchy
-- Reusable cognitive tasks such as N-back, Stroop, and Flanker
-- Table-driven trial definitions with simple TSV inputs
-- Built-in logging for trial outputs and experiment events
-- Support for both desktop and VR-oriented setups
-
-## Core Idea
-
-Experiments are composed from small Unity components:
-
-- `RootTask` starts the experiment
-- structural tasks organize flow and repetition
-- interactive and functional tasks present stimuli, collect responses, and control state
-- text tables provide trial rows without custom code for each experiment
+## Supports
+- Task-based experiment flow (**GUI-focused**)
+  - Example: N-back, Stroop, and Flanker
+- Table-driven trial definitions with simple TSV/CSV inputs
+- **Remote** logging for trial outputs and experiment events
+- **Calibration** for Meta Quests Headset
 
 ## Screenshots
 
